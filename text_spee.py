@@ -79,10 +79,8 @@ def main():
         if output_file:
             print(f"Generated audio file at: {output_file}")
             
-            # Optional: Play audio on macOS
             os.system(f"afplay {output_file}")
             
-            # Cleanup temp file
             try:
                 os.remove(output_file)
                 print("Temp file cleaned up.")
