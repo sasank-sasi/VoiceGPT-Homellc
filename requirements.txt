@@ -1,0 +1,10 @@
+groq
+torch
+whisper
+openai-whisper
+numpy
+python-dotenv
+PyAudio
+gTTS
+playsound
+asyncio
