@@ -6,11 +6,33 @@ import tempfile
 from typing import Optional
 
 class KokoroTTS:
-    def __init__(self, lang_code: str = 'en', voice: str = 'en_heart'):
-        """Initialize Kokoro TTS pipeline."""
+    def __init__(self, lang_code: str = 'a', voice: str = 'af_heart'):
+        """
+        Initialize Kokoro TTS pipeline.
+        
+        Args:
+            lang_code (str): Language code ('a' for American English, 'b' for British English)
+            voice (str): Voice ID to use
+        """
+        # Validate language code
+        self.lang_codes = {
+            'a': 'American English',
+            'b': 'British English',
+            'e': 'Spanish',
+            'f': 'French',
+            'h': 'Hindi',
+            'i': 'Italian',
+            'p': 'Portuguese',
+            'j': 'Japanese',
+            'z': 'Mandarin Chinese'
+        }
+        
+        if lang_code not in self.lang_codes:
+            raise ValueError(f"Invalid language code. Must be one of: {list(self.lang_codes.keys())}")
+            
         self.pipeline = KPipeline(lang_code=lang_code)
         self.voice = voice
-        print("Kokoro TTS initialized successfully!")
+        print(f"Kokoro TTS initialized successfully with {self.lang_codes[lang_code]}!")
 
     def generate_speech(self, text: str, output_path: Optional[str] = None) -> Optional[str]:
         """
@@ -44,23 +66,33 @@ class KokoroTTS:
             return None
 
 def main():
-    # Initialize TTS
-    tts = KokoroTTS()
-    
-    # Example text
-    text = "Hello! This is a test of the Kokoro text to speech system."
-    
-    # Generate speech
-    output_file = tts.generate_speech(text)
-    
-    if output_file:
-        print(f"Generated audio file at: {output_file}")
+    try:
+        # Initialize TTS with American English
+        tts = KokoroTTS(lang_code='a')  # 'a' for American English
         
-        # Cleanup temp file after use
-        try:
-            os.remove(output_file)
-        except:
-            pass
+        # Example text
+        text = "Hello! This is a test of the Kokoro text to speech system."
+        
+        # Generate speech
+        output_file = tts.generate_speech(text)
+        
+        if output_file:
+            print(f"Generated audio file at: {output_file}")
+            
+            # Optional: Play audio on macOS
+            os.system(f"afplay {output_file}")
+            
+            # Cleanup temp file
+            try:
+                os.remove(output_file)
+                print("Temp file cleaned up.")
+            except Exception as e:
+                print(f"Error cleaning up file: {str(e)}")
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return 1
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit(main())

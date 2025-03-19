@@ -10,7 +10,8 @@ import pyaudio
 import pygame
 from typing import Optional
 import json
-from gtts import gTTS
+from kokoro import KPipeline
+import soundfile as sf
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 # Load environment variables
@@ -56,6 +57,26 @@ class AdvancedVoiceBot:
         # Initialize PyAudio and Pygame mixer
         self.audio = pyaudio.PyAudio()
         pygame.mixer.init()
+        
+        # Initialize Kokoro TTS
+        try:
+            self.lang_codes = {
+                'a': 'American English',
+                'b': 'British English',
+                'e': 'Spanish',
+                'f': 'French',
+                'h': 'Hindi',
+                'i': 'Italian',
+                'p': 'Portuguese',
+                'j': 'Japanese',
+                'z': 'Mandarin Chinese'
+            }
+            self.tts_pipeline = KPipeline(lang_code='a')  # Initialize with American English
+            self.tts_voice = 'af_heart'  # Use emotional voice
+            print("Kokoro TTS initialized successfully!")
+        except Exception as e:
+            print(f"Error initializing Kokoro TTS: {str(e)}")
+            raise
         
         # Bot personality and context
         self.conversation_history = []
@@ -202,21 +223,30 @@ class AdvancedVoiceBot:
             return "I apologize, but I encountered an error processing your request."
 
     async def speak(self, text: str):
-        """Convert text to speech and play it using pygame."""
+        """Convert text to speech using Kokoro and play it using pygame."""
         try:
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio:
-                tts = gTTS(text=text, lang='en', slow=False)
-                tts.save(temp_audio.name)
-                
-                # Play audio using pygame
-                pygame.mixer.music.load(temp_audio.name)
-                pygame.mixer.music.play()
-                while pygame.mixer.music.get_busy():
-                    await asyncio.sleep(0.1)
-                
-                # Cleanup
-                pygame.mixer.music.unload()
-                os.remove(temp_audio.name)
+            # Generate speech with Kokoro
+            generator = self.tts_pipeline(text, voice=self.tts_voice)
+            
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
+                # Get the generated audio
+                for _, _, audio in generator:
+                    # Save audio to file
+                    sf.write(temp_audio.name, audio, 24000)
+                    
+                    # Play audio using pygame
+                    pygame.mixer.music.load(temp_audio.name)
+                    pygame.mixer.music.play()
+                    while pygame.mixer.music.get_busy():
+                        await asyncio.sleep(0.1)
+                    
+                    # Cleanup
+                    pygame.mixer.music.unload()
+                    os.remove(temp_audio.name)
+                    print("Audio playback complete.")
+                    print("temp file has been removed")
+                    break  # Only process the first generated audio
+                    
         except Exception as e:
             print(f"Error in text-to-speech: {str(e)}")
 
