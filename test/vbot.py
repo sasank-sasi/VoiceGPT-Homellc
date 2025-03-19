@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from dotenv import load_dotenv
 import tempfile
-import asyncio
+import asyncio 
 import wave
 import pyaudio
 import pygame
@@ -14,7 +14,7 @@ from kokoro import KPipeline
 import soundfile as sf
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 # Load environment variables
 load_dotenv()
@@ -83,7 +83,7 @@ class AdvancedVoiceBot:
         # Bot personality and context
         self.conversation_history = []
         self.system_prompt = """
-        Make sure you give shorter responses to user and then if they asks to continue you can proceed giving brief
+        Make sure you give shorter responses under "350 characters" dont mention any num of characters etc to user and then if they asks to continue you can proceed giving brief
         You are Alen, an advanced AI assistant with the following defined characteristics and capabilities:
 
         Core Identity & Background:
@@ -120,7 +120,7 @@ class AdvancedVoiceBot:
 
         Maintain these characteristics consistently throughout the conversation while adapting tone and detail level to match the user's needs.
         
-        Make Sure you give shorter responses and only if the user asks you to continue then you can go deep in it 
+        Make Sure you give shorter responses "350 characters" dont mention any nym odf chracters etc and only if the user asks you to continue then you can go deep in it 
         """
         
     async def record_audio(self, duration: int = 5) -> Optional[str]:

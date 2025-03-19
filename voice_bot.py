@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from dotenv import load_dotenv
 import tempfile
-import asyncio
+import asyncio 
 import wave
 import pyaudio
 import pygame
@@ -13,6 +13,8 @@ import json
 from kokoro import KPipeline
 import soundfile as sf
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import warnings
+warnings.filterwarnings("ignore")
 
 # Load environment variables
 load_dotenv()
@@ -81,7 +83,7 @@ class AdvancedVoiceBot:
         # Bot personality and context
         self.conversation_history = []
         self.system_prompt = """
-        Make sure you give shorter responses to user and then if they asks to continue you can proceed giving brief
+        Make sure you give shorter responses under "350 characters" dont mention any num of characters etc to user and then if they asks to continue you can proceed giving brief
         You are Alen, an advanced AI assistant with the following defined characteristics and capabilities:
 
         Core Identity & Background:
@@ -118,7 +120,7 @@ class AdvancedVoiceBot:
 
         Maintain these characteristics consistently throughout the conversation while adapting tone and detail level to match the user's needs.
         
-        Make Sure you give shorter responses and only if the user asks you to continue then you can go deep in it 
+        Make Sure you give shorter responses "350 characters" dont mention any nym odf chracters etc and only if the user asks you to continue then you can go deep in it 
         """
         
     async def record_audio(self, duration: int = 5) -> Optional[str]:
@@ -153,37 +155,41 @@ class AdvancedVoiceBot:
     async def transcribe_audio(self, audio_file: str) -> str:
         """Transcribe audio using Whisper."""
         try:
-            # Load and process audio
-            with wave.open(audio_file, 'rb') as wf:
-                audio_data = wf.readframes(wf.getnframes())
-                audio_array = np.frombuffer(audio_data, dtype=np.float32)
+            # Load audio data and resample to 16kHz
+            audio_array, sample_rate = sf.read(audio_file, dtype='float32')
+            
+            # Ensure mono audio
+            if len(audio_array.shape) > 1:
+                audio_array = audio_array.mean(axis=1)
                 
-                # Process audio with Whisper
-                inputs = self.processor(
-                    audio_array, 
-                    sampling_rate=RATE,
-                    return_tensors="pt"
-                ).to(self.model.device)
-                
-                # Generate transcription
-                generated_ids = self.model.generate(
-                    inputs.input_features,
-                    max_new_tokens=256,
-                    num_beams=5,
-                    temperature=0.0
-                )
-                
-                # Decode the generated ids
-                transcription = self.processor.batch_decode(
-                    generated_ids,
-                    skip_special_tokens=True
-                )[0].strip()
-                
-                if not transcription:
-                    return "Could not detect speech. Please try again."
-                    
-                print(f"\nTranscribed: {transcription}")
-                return transcription
+            # Resample to 16kHz if needed
+            if sample_rate != 16000:
+                from scipy import signal
+                target_length = int(len(audio_array) * 16000 / sample_rate)
+                audio_array = signal.resample(audio_array, target_length)
+            
+            # Process with Whisper
+            inputs = self.processor(
+                audio_array, 
+                sampling_rate=16000,  # Explicitly set sampling rate
+                return_tensors="pt"
+            ).to(self.model.device)
+            
+            # Generate transcription
+            generated_ids = self.model.generate(
+                inputs.input_features,
+                max_new_tokens=256,
+                num_beams=5,
+                temperature=0.0
+            )
+            
+            # Decode the generated ids
+            transcription = self.processor.batch_decode(
+                generated_ids,
+                skip_special_tokens=True
+            )[0].strip()
+            
+            return transcription or "Could not detect speech. Please try again."
                 
         except Exception as e:
             print(f"Transcription error: {str(e)}")
