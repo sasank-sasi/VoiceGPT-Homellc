@@ -204,9 +204,7 @@ with gr.Blocks() as demo:
                 type="filepath",
                 label="🎤 Speak here"
             )
-            with gr.Row():
-                process_btn = gr.Button("Process Recording")
-                clear_btn = gr.Button("Clear All", variant="secondary")
+            process_btn = gr.Button("Process Recording")
             status = gr.Markdown("Ready to listen...")
         
         with gr.Column():
@@ -220,83 +218,22 @@ with gr.Blocks() as demo:
     )
 
     async def process_with_status(audio_path):
-        """Process audio with better state handling"""
-        # Check if audio is actually recorded
-        if audio_path is None or not os.path.exists(audio_path):
-            return (
-                "⚠️ No recording found - Please record your message first",
-                "",
-                "",
-                None
-            )
+        if audio_path is None:
+            return "No audio detected", "", "Please speak into the microphone", None
 
         try:
-            status_msg = "🎯 Processing your message..."
             transcription = await transcribe_audio(audio_path)
-            
-            if not transcription or transcription == "Could not detect speech. Please try again.":
-                return (
-                    "⚠️ No speech detected - Please record again",
-                    "",
-                    "",
-                    None
-                )
-            
             response = await get_ai_response(transcription)
             tts_audio = await text_to_speech(response)
-            
-            return (
-                "✨ Processing complete",
-                transcription,
-                response,
-                tts_audio
-            )
-            
+            return "Processing complete", transcription, response, tts_audio
         except Exception as e:
-            print(f"Error in processing: {str(e)}")
-            return (
-                f"⚠️ Error: {str(e)}",
-                "",
-                "Something went wrong",
-                None
-            )
+            print(f"Error: {str(e)}")
+            return f"Error: {str(e)}", "", "Something went wrong", None
 
-    # Update button states
-    def update_button_states(audio_path):
-        """Enable/disable process button based on audio state"""
-        is_active = audio_path is not None and os.path.exists(audio_path)
-        return gr.update(interactive=is_active)
-
-    # Event handlers
-    mic.change(
-        fn=update_button_states,
-        inputs=[mic],
-        outputs=[process_btn]
-    )
-    
     process_btn.click(
         fn=process_with_status,
         inputs=[mic],
         outputs=[status, output_text, response_text, audio_output]
-    )
-
-    def clear_components():
-        """Reset all components to their default state"""
-        global conversation_history
-        conversation_history = []  # Clear conversation history
-        # Use gr.update() for each component
-        return (
-            None,  # mic
-            "Ready to listen...",  # status
-            "",    # output_text
-            "",    # response_text
-            None   # audio_output
-        )
-
-    clear_btn.click(
-        fn=clear_components,
-        inputs=[],
-        outputs=[mic, status, output_text, response_text, audio_output]
     )
 
 if __name__ == "__main__":
