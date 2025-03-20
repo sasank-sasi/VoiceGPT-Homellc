@@ -191,8 +191,8 @@ class ModelSelector:
 To deploy the Home LLC Voice Assistant using Gradio:
 
 ```bash
-pip install gradio openai groq-api kokoro-tts
-python app.py
+pip install requirements.txt
+python grad.py
 ```
 
 ---
