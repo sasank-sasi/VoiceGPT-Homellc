@@ -187,8 +187,8 @@ class ModelSelector:
 
 ---
 
-## Deployment
-To deploy the Home LLC Voice Assistant using Gradio:
+## Running the Application
+To run the Home LLC Voice Assistant using Gradio:
 
 ```bash
 pip install requirements.txt
